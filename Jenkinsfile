@@ -1,3 +1,27 @@
+def revertimage = { count ->
+
+	sh '''
+	current_build=$(cat /tmp/gitTag)
+	major=$(echo "$current_build" | awk -F "." '{print $1}')
+    minor=$(echo "$current_build" | awk -F "." '{print $2}')
+    patch=$(echo "$current_build" | awk -F "." '{print $3}')
+    oldpatch=$(expr $patch - 1)
+    previous_build="${major}.${minor}.${oldpatch}"
+        
+    echo "Previous tag $previous_build"
+    
+    cont_ID=$(ssh jnsadmin@$remoteServer 'docker ps -qa --filter name=samplewebapp')
+    if [[ -z "$cont_ID" ]];
+    then
+        docker -H ssh://jnsadmin@$remoteServer run --name samplewebapp  -d -p 8000:8080 santoshgoswami/samplewebapp:$previous_build       
+	else
+		ssh jnsadmin@$remoteServer docker rm "${cont_ID}" -f
+		docker -H ssh://jnsadmin@$remoteServer run --name samplewebapp  -d -p 8000:8080 santoshgoswami/samplewebapp:$previous_build       
+                    
+    fi
+	'''
+}
+
 pipeline{
 	agent any
 	tools{
@@ -24,14 +48,11 @@ pipeline{
                     major=$(echo "$LATEST_TAG" | awk -F "." '{print $1}')
                     minor=$(echo "$LATEST_TAG" | awk -F "." '{print $2}')
                     patch=$(echo "$LATEST_TAG" | awk -F "." '{print $3}')
-
                     echo "major $major"
                     echo "minor $minor"
                     echo "patch $patch"
-
                     newpatch=$(expr $patch + 1)
                     echo "new patch $newpatch"
-
                     new_tag="${major}.${minor}.${newpatch}"
                     echo "the new git tag generated $new_tag"
                     
@@ -216,7 +237,6 @@ pipeline{
 						previous_build="${major}.${minor}.${oldpatch}"
         
                         echo "Previous tag $previous_build"
-
                         cont_ID=$(ssh jnsadmin@$remoteServer 'docker ps -qa --filter name=samplewebapp')
                         ssh jnsadmin@$remoteServer docker rm "${cont_ID}" -f
                         docker -H ssh://jnsadmin@$remoteServer run --name samplewebapp  -d -p 8000:8080 santoshgoswami/samplewebapp:$previous_build                   
