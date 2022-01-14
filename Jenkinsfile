@@ -31,7 +31,7 @@ pipeline{
         booleanParam(name: 'sonar', defaultValue: false, description: 'want to do Sonarqube test')
     }
 	environment{
-        remoteServer = '192.168.1.6'
+        remoteServer = '192.168.1.5'
     }
 	stages{
 		stage('Git Checkout'){
