@@ -197,7 +197,7 @@ pipeline{
 							echo "Deployment Successfull"
                             echo 'SUCCESS' > /tmp/deployment_status
                             git tag "$new_tag"
-                            git push https://goswami97:"$githubAccessToken"@github.com/goswami97/testingrepo.git --tags
+                            git push https://goswami97:"$githubAccessToken"@github.com/goswami97/double7.git --tags
                         else
                             echo "Deployment Fail"
                             echo 'FAIL' > /tmp/deployment_status
