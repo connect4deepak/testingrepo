@@ -182,10 +182,10 @@ pipeline{
                     cont_ID=$(ssh jnsadmin@$remoteServer 'docker ps -qa --filter name=samplewebapp')
                     if [[ -z "$cont_ID" ]];
                     then
-                        docker -H ssh://jnsadmin@$remoteServer run --name samplewebapp  -d -p 8000:8000 santoshgoswami/samplewebapp:$new_tag       
+                        docker -H ssh://jnsadmin@$remoteServer run --name samplewebapp  -d -p 8000:8080 santoshgoswami/samplewebapp:$new_tag       
 					else
 						ssh jnsadmin@$remoteServer docker rm "${cont_ID}" -f
-						docker -H ssh://jnsadmin@$remoteServer run --name samplewebapp  -d -p 8000:8000 santoshgoswami/samplewebapp:$new_tag       
+						docker -H ssh://jnsadmin@$remoteServer run --name samplewebapp  -d -p 8000:8080 santoshgoswami/samplewebapp:$new_tag       
                     
                     fi
 					'''
