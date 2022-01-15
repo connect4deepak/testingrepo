@@ -31,7 +31,7 @@ pipeline{
         booleanParam(name: 'sonar', defaultValue: false, description: 'want to do Sonarqube test')
     }
 	environment{
-        remoteServer = '192.168.1.5'
+        remoteServer = '192.168.1.6'
     }
 	stages{
 		stage('Git Checkout'){
@@ -182,10 +182,10 @@ pipeline{
                     cont_ID=$(ssh jnsadmin@$remoteServer 'docker ps -qa --filter name=samplewebapp')
                     if [[ -z "$cont_ID" ]];
                     then
-                        docker -H ssh://jnsadmin@$remoteServer run --name samplewebapp  -d -p 8000:8080 santoshgoswami/samplewebapp:$new_tag       
+                        docker -H ssh://jnsadmin@$remoteServer run --name samplewebapp  -d -p 8000:8000 santoshgoswami/samplewebapp:$new_tag       
 					else
 						ssh jnsadmin@$remoteServer docker rm "${cont_ID}" -f
-						docker -H ssh://jnsadmin@$remoteServer run --name samplewebapp  -d -p 8000:8080 santoshgoswami/samplewebapp:$new_tag       
+						docker -H ssh://jnsadmin@$remoteServer run --name samplewebapp  -d -p 8000:8000 santoshgoswami/samplewebapp:$new_tag       
                     
                     fi
 					'''
@@ -228,19 +228,7 @@ pipeline{
 					def output=readFile('/tmp/deployment_status').trim()
 					if( "$output" == "FAIL"){
 						echo "Deployment Fail, Reverting to previos build"
-						sh '''
-						current_build=`cat /tmp/gitTag`
-                        major=$(echo "$current_build" | awk -F "." '{print $1}')
-                        minor=$(echo "$current_build" | awk -F "." '{print $2}')
-                        patch=$(echo "$current_build" | awk -F "." '{print $3}')
-                        oldpatch=$(expr $patch - 1)
-						previous_build="${major}.${minor}.${oldpatch}"
-        
-                        echo "Previous tag $previous_build"
-                        cont_ID=$(ssh jnsadmin@$remoteServer 'docker ps -qa --filter name=samplewebapp')
-                        ssh jnsadmin@$remoteServer docker rm "${cont_ID}" -f
-                        docker -H ssh://jnsadmin@$remoteServer run --name samplewebapp  -d -p 8000:8080 santoshgoswami/samplewebapp:$previous_build                   
-						'''
+						revertimage(1)
 					}else{
 						echo "Deployment Success"
 						
