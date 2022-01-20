@@ -31,7 +31,7 @@ pipeline{
         booleanParam(name: 'sonar', defaultValue: false, description: 'want to do Sonarqube test')
     }
 	environment{
-        remoteServer = '192.168.1.6'
+        remoteServer = '192.168.1.7'
     }
 	stages{
 		stage('Git Checkout'){
@@ -100,14 +100,12 @@ pipeline{
 				environment name: 'sonar', value: 'true'
 			}
 			steps{
-				script{
-					sh '''
-					mvn sonar:sonar \
-	                    -Dsonar.projectKey=MyTestProject \
-	                    -Dsonar.host.url=http://192.168.1.5:9000/sonarqube \
-	                    -Dsonar.login=95dcd3657c25d6e065a0fce11a89849d5210435a
-					'''
-				}
+			    withSonarQubeEnv('mysonar') {
+			    sh '''
+			    mvn clean package sonar:sonar \
+			        -Dsonar.projectKey=MyTestProject
+			    '''
+                }
 			}
 			post{
 				failure{
@@ -123,6 +121,31 @@ pipeline{
 				}
 			}
 		}
+		
+		stage('SonarQube Quality Gate'){
+			when{
+				environment name: 'sonar', value: 'true'
+			}
+			steps{
+			    timeout(time: 1, unit: 'HOURS') {
+					waitForQualityGate abortPipeline: true
+				}
+			}
+			post{
+				failure{
+					script{
+						currentBuild.result = "FAILED"
+						def sonar_report = readFile("${workspace}/FdaServerParent/target/sonar/report-task.txt")
+						subject= "FDA - Build # ${currentBuild.number} -- Frontend Sonar Quality ${currentBuild.result}!"
+						body="<html><head></head><body>Hi all,<br><br>Sonarqube quality test fails.<br>${sonar_report}.<br>Regards,<br>DevOps Team.</body></html>"
+						mail_to="santoshgoswami691@gmail.com"
+						mail bcc: '', body: "${body}", cc: '', charset: 'UTF-8', from: '',mimeType: 'text/html', replyTo: '', subject: "${subject}", to: "${mail_to}"
+						
+					}
+				}
+			}
+		}
+		
 		stage('Docker Image Build and Tag'){
 			steps{
 				script{
@@ -272,3 +295,4 @@ pipeline{
 		
 	}
 }
+
